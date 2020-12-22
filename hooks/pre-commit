@@ -1,0 +1,49 @@
+#!/usr/bin/env python3
+
+'''This script gets git staged diff and inspect if there is any UI
+element is updated'''
+
+import os
+from unidiff import PatchSet
+
+# Global variable
+REMOVED_LINES_LIST = []
+
+
+def get_git_diff():
+    try:
+        staged_diff = os.popen('git diff --cached')
+        return staged_diff.read()
+    except OSError as e:
+        print("Error: " + e)
+
+
+def main():
+    print("\n\n")
+    print("This is a githook execution .................... ")
+    global REMOVED_LINES_LIST
+    staged_diff = get_git_diff()
+    patch_set = PatchSet(staged_diff)
+    for patched_file in patch_set:
+        file_path = patched_file.path
+        print('Patched file name is:  ' + file_path)
+        removed_lines = [line.value
+                         for hunk in patched_file
+                         for line in hunk
+                         if line.is_added and
+                         line.value.strip() != '']
+        REMOVED_LINES_LIST.append(removed_lines)
+
+    print('Removed lines: ' + str(REMOVED_LINES_LIST))
+    notify_changes()
+    print("\n\n")
+
+
+def notify_changes():
+    ''' this method can send mail/openticket'''
+    # you can map intrested ui component by reading REMOVED_LINES_LIST
+    print("Notifying all stakeholders...... ")
+
+
+# call main method
+main()
